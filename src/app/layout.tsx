@@ -1,32 +1,34 @@
-// src/app/layout.tsx
-import type { Metadata } from 'next';
-import { Press_Start_2P } from 'next/font/google';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import PixelMountainBackground from '@/components/PixelMountainBackground';
 
-const pixelFont = Press_Start_2P({
-  weight: '400',
-  subsets: ['latin'],
-  variable: '--font-pixel',
-});
-
 export const metadata: Metadata = {
   title: 'Workout RPG - Quest for Gains',
-  description: 'Gamified fitness tracker inspired by retro 8-bit RPGs',
+  description: 'Gamified retro 8-bit fitness tracker',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'WorkoutRPG',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#0c0b14',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <html lang="en">
-      <body className={`${pixelFont.variable} min-h-screen text-slate-100 antialiased selection:bg-rpg-accent selection:text-black relative`}>
-        {/* เลเยอร์พื้นหลังทิวเขาพิกเซล */}
+      <body className="antialiased min-h-screen relative overflow-x-hidden selection:bg-cyan-500 selection:text-black">
         <PixelMountainBackground />
-
-        {/* หน้าจอคอนเทนต์หลัก */}
         {children}
       </body>
     </html>
