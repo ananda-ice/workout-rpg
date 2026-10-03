@@ -2,7 +2,10 @@
 
 > A retro 8-bit gamified workout and fitness tracker built with **Next.js (App Router)**, **TypeScript**, and **Tailwind CSS v4**.
 
-![Workout RPG Preview](https://raw.githubusercontent.com/ananda-ice/workout-rpg/main/public/preview.png) *(ถ้ามีภาพ Screenshot สามารถแคปไปวางในโฟลเดอร์ public ได้)*
+[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen.svg)](https://workout-rpg-ananda-projects.vercel.app)
+[![Version](https://img.shields.io/badge/version-v1.0.1-blue.svg)](https://github.com/ananda-ice/workout-rpg/releases/tag/v1.0.1)
+
+> 🎮 **Live Demo:** [https://workout-rpg-ananda-projects.vercel.app](https://workout-rpg-ananda-projects.vercel.app)
 
 ---
 
