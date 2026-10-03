@@ -1,21 +1,18 @@
+// src/app/layout.tsx
 import type { Metadata } from 'next';
-import { Inter, Press_Start_2P } from 'next/font/google';
+import { Press_Start_2P } from 'next/font/google';
 import './globals.css';
+import PixelMountainBackground from '@/components/PixelMountainBackground';
 
-const inter = Inter({ 
-  subsets: ['latin'],
-  variable: '--font-inter'
-});
-
-const pixelFont = Press_Start_2P({ 
+const pixelFont = Press_Start_2P({
   weight: '400',
   subsets: ['latin'],
-  variable: '--font-pixel'
+  variable: '--font-pixel',
 });
 
 export const metadata: Metadata = {
   title: 'Workout RPG - Quest for Gains',
-  description: 'Gamified Fitness Tracker in 8-bit Pixel Art Style',
+  description: 'Gamified fitness tracker inspired by retro 8-bit RPGs',
 };
 
 export default function RootLayout({
@@ -24,8 +21,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${inter.variable} ${pixelFont.variable}`}>
-      <body className="font-sans bg-[#0f0e17] text-[#fffffe] min-h-screen selection:bg-[#ff8906] selection:text-[#0f0e17]">
+    <html lang="en">
+      <body className={`${pixelFont.variable} min-h-screen text-slate-100 antialiased selection:bg-rpg-accent selection:text-black relative`}>
+        {/* เลเยอร์พื้นหลังทิวเขาพิกเซล */}
+        <PixelMountainBackground />
+
+        {/* หน้าจอคอนเทนต์หลัก */}
         {children}
       </body>
     </html>

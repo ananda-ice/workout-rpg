@@ -17,7 +17,8 @@ import {
   HERO_CLASSES, 
   DEFAULT_BOSS, 
   getCurrentWeekId,
-  checkRestEligibility 
+  checkRestEligibility,
+  getRequiredExp 
 } from '@/utils/rpgLogic';
 import { sfx } from '@/utils/sfx';
 
@@ -48,6 +49,7 @@ export default function HomePage() {
   const [currentExp, setCurrentExp] = useState(0);
   const [totalQuests, setTotalQuests] = useState(0);
   const [heroClass, setHeroClass] = useState<HeroClass>('mage');
+  const [isDay, setIsDay] = useState(false);
 
   // Boss Raid State
   const [boss, setBoss] = useState<BossRaid>(DEFAULT_BOSS);
@@ -65,7 +67,9 @@ export default function HomePage() {
   const [activeQuest, setActiveQuest] = useState<WorkoutProgram | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
-  const maxExp = 100;
+
+  // คำนวณ EXP สูงสุดตามเลเวลปัจจุบัน
+  const maxExp = getRequiredExp(characterLevel);
 
   useEffect(() => {
     const savedPrograms = localStorage.getItem('rpg_programs');
@@ -78,6 +82,7 @@ export default function HomePage() {
     const savedHeight = localStorage.getItem('rpg_height');
     const savedBmi = localStorage.getItem('rpg_bmi');
     const savedHistory = localStorage.getItem('rpg_history');
+    const savedTheme = localStorage.getItem('rpg_theme');
 
     if (savedPrograms) setPrograms(JSON.parse(savedPrograms));
     if (savedLevel) setCharacterLevel(Number(savedLevel));
@@ -88,6 +93,11 @@ export default function HomePage() {
     if (savedHeight) setHeight(Number(savedHeight));
     if (savedBmi) setBmi(Number(savedBmi));
     if (savedHistory) setHistory(JSON.parse(savedHistory));
+
+    if (savedTheme === 'day') {
+      setIsDay(true);
+      document.documentElement.classList.add('day-mode');
+    }
 
     if (savedBoss) {
       const parsedBoss: BossRaid = JSON.parse(savedBoss);
@@ -100,6 +110,19 @@ export default function HomePage() {
 
     setIsLoaded(true);
   }, []);
+
+  const toggleDayNight = () => {
+    sfx.playClick();
+    const nextVal = !isDay;
+    setIsDay(nextVal);
+    if (nextVal) {
+      document.documentElement.classList.add('day-mode');
+      localStorage.setItem('rpg_theme', 'day');
+    } else {
+      document.documentElement.classList.remove('day-mode');
+      localStorage.setItem('rpg_theme', 'night');
+    }
+  };
 
   const currentStreak = calculateStreak(history);
   const heroRankTitle = getHeroTitle(characterLevel);
@@ -126,15 +149,18 @@ export default function HomePage() {
     }
   };
 
-  // จัดการเมื่อเสร็จสิ้น Workout ปกติ
+  // ตรรกะคำนวณ EXP แบบไดนามิกตามเลเวล
   const handleCompleteQuest = (expEarned: number, sessionData: WorkoutSession) => {
     sfx.playLevelUp();
     let nextExp = currentExp + expEarned;
     let nextLvl = characterLevel;
+    let reqExp = getRequiredExp(nextLvl);
 
-    if (nextExp >= maxExp) {
+    // รองรับกรณีได้ EXP ล้นจนอัปได้มากกว่า 1 เลเวล
+    while (nextExp >= reqExp) {
+      nextExp -= reqExp;
       nextLvl += 1;
-      nextExp = nextExp - maxExp;
+      reqExp = getRequiredExp(nextLvl);
     }
 
     const nextTotalQuests = totalQuests + 1;
@@ -158,13 +184,22 @@ export default function HomePage() {
     localStorage.setItem('rpg_boss', JSON.stringify(updatedBoss));
   };
 
-  // ฟังก์ชันกดวันพักผ่อน Campfire Rest Day
   const handleRestDay = () => {
     if (!restEligibility.canRest) return;
 
     sfx.playLevelUp();
     const today = new Date().toISOString().split('T')[0];
-    const restExp = 15; // EXP การพักผ่อน
+    const restExp = 15;
+
+    let nextExp = currentExp + restExp;
+    let nextLvl = characterLevel;
+    let reqExp = getRequiredExp(nextLvl);
+
+    while (nextExp >= reqExp) {
+      nextExp -= reqExp;
+      nextLvl += 1;
+      reqExp = getRequiredExp(nextLvl);
+    }
 
     const restSession: WorkoutSession = {
       id: Date.now().toString(),
@@ -175,13 +210,6 @@ export default function HomePage() {
       logs: [],
       expGained: restExp,
     };
-
-    let nextExp = currentExp + restExp;
-    let nextLvl = characterLevel;
-    if (nextExp >= maxExp) {
-      nextLvl += 1;
-      nextExp = nextExp - maxExp;
-    }
 
     const updatedHistory = [...history, restSession];
 
@@ -236,21 +264,32 @@ export default function HomePage() {
   if (!isLoaded) return null;
 
   return (
-    <main className="max-w-5xl mx-auto min-h-screen p-4 pb-20 flex flex-col gap-6">
+    <main className="max-w-5xl mx-auto min-h-screen p-4 pb-20 flex flex-col gap-6 relative z-10">
       
       {/* Top Header */}
       <header className="flex justify-between items-center px-1">
         <span className="font-pixel text-[10px] text-gray-400 tracking-wider">FITNESS QUEST RPG</span>
-        <button
-          onClick={() => {
-            sfx.playClick();
-            setIsSettingsOpen(true);
-          }}
-          className="p-2 pixel-panel bg-[#15141f] text-gray-400 hover:text-white hover:border-rpg-accent cursor-pointer transition-colors"
-          title="Settings"
-        >
-          <Settings size={16} />
-        </button>
+        
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleDayNight}
+            title={isDay ? 'Switch to Night Mode' : 'Switch to Day Mode'}
+            className="p-1.5 pixel-panel bg-[#15141f] hover:border-rpg-accent cursor-pointer transition-transform hover:scale-105 active:scale-95 flex items-center justify-center"
+          >
+            {isDay ? <span className="text-sm">☀️️</span> : <span className="text-sm">🌙</span>}
+          </button>
+
+          <button
+            onClick={() => {
+              sfx.playClick();
+              setIsSettingsOpen(true);
+            }}
+            className="p-2 pixel-panel bg-[#15141f] text-gray-400 hover:text-white hover:border-rpg-accent cursor-pointer transition-colors"
+            title="Settings"
+          >
+            <Settings size={16} />
+          </button>
+        </div>
       </header>
 
       <div className="flex flex-col md:grid md:grid-cols-5 gap-6">
@@ -258,7 +297,7 @@ export default function HomePage() {
         {/* ฝั่งซ้าย: Hero Status, Boss Raid, Achievements & Logs */}
         <div className="md:col-span-2 flex flex-col gap-6">
           
-          {/* 1. Character Status Window */}
+          {/* Character Status Window */}
           <section className="pixel-panel p-4 flex flex-col gap-3">
             <div className="flex justify-between items-center border-b-2 border-black pb-2">
               <div className="flex items-center gap-2">
@@ -281,19 +320,22 @@ export default function HomePage() {
                 <span>EXP</span>
                 <span>{currentExp} / {maxExp}</span>
               </div>
-              <div className="w-full h-3 bg-black border-2 border-black p-0.5">
+              <div className="w-full h-3.5 bg-[#2b2738] border-2 border-black p-0.5 overflow-hidden">
                 <div 
-                  className="h-full bg-rpg-cyan transition-all duration-300"
-                  style={{ width: `${(currentExp / maxExp) * 100}%` }}
+                  className="h-full transition-all duration-300 min-w-[3px]"
+                  style={{ 
+                    width: `${Math.max(3, (currentExp / maxExp) * 100)}%`,
+                    backgroundColor: '#00f0ff'
+                  }}
                 />
               </div>
             </div>
           </section>
 
-          {/* 2. Boss Raid & Gear Showcase */}
+          {/* Boss Raid & Gear Showcase */}
           <BossRaidBox boss={boss} level={characterLevel} />
 
-          {/* 3. Quick Stats Overview */}
+          {/* Quick Stats Overview */}
           <section className="grid grid-cols-2 gap-3">
             <div 
               onClick={() => {
@@ -314,17 +356,17 @@ export default function HomePage() {
             </div>
           </section>
 
-          {/* 4. Achievements */}
+          {/* Achievements */}
           <AchievementBox level={characterLevel} totalQuests={totalQuests} streak={currentStreak} />
 
-          {/* 5. Logs & Heatmap */}
+          {/* Logs & Heatmap */}
           <QuestHistory history={history} />
         </div>
 
         {/* ฝั่งขวา: Rest Day Banner & Quest Board */}
         <div className="md:col-span-3 flex flex-col gap-4">
           
-          {/* Campfire Rest Day Banner (ใหม่) */}
+          {/* Campfire Rest Day Banner */}
           <section className="pixel-panel p-4 bg-[#121824] border-2 border-blue-500/50 flex justify-between items-center">
             <div className="flex items-center gap-3">
               <span className="text-2xl animate-pulse">⛺</span>
@@ -444,7 +486,7 @@ export default function HomePage() {
 
       </div>
 
-      {/* Modals ทั้งหมด */}
+      {/* Modals */}
       <ActiveQuestModal
         isOpen={Boolean(activeQuest)}
         program={activeQuest}

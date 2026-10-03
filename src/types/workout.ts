@@ -1,6 +1,6 @@
 // src/types/workout.ts
 
-export type HeroClass = 'mage' | 'warrior' | 'ranger' | 'rogue';
+export type HeroClass = 'mage' | 'warrior' | 'paladin' | 'rogue' | 'ranger';
 
 export interface Exercise {
   id: string;
@@ -27,6 +27,7 @@ export interface WorkoutSession {
 }
 
 export interface BossRaid {
+  id?: string;
   name: string;
   maxHp: number;
   currentHp: number;
@@ -34,10 +35,10 @@ export interface BossRaid {
   weekId: string;
 }
 
-export interface Equipment {
+// เพิ่มโครงสร้างสำหรับเก็บประวัติน้ำหนักและ BMI
+export interface BodyStatEntry {
   id: string;
-  name: string;
-  icon: string;
-  requiredLevel: number;
-  buffDesc: string;
+  date: string;
+  weight: number;
+  bmi: number;
 }
